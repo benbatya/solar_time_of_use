@@ -1,6 +1,6 @@
 import React from 'react';
 import { Zap, Battery, Sun, Home } from 'lucide-react';
-import { Measurement } from '../../hooks/useEnergyData';
+import type { Measurement } from '../../hooks/useEnergyData';
 import clsx from 'clsx';
 
 interface OverviewCardsProps {

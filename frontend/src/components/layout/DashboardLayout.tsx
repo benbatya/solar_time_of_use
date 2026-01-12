@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Zap, Battery, Sun } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;

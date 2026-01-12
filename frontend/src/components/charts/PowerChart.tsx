@@ -1,6 +1,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Measurement } from '../../hooks/useEnergyData';
+import type { Measurement } from '../../hooks/useEnergyData';
 
 interface PowerChartProps {
     history: Measurement[];
