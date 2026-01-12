@@ -1,0 +1,32 @@
+# Walkthrough - Backend Implementation
+
+I have completed the backend implementation for data ingestion from Shelly 3EM and Sol-Ark 15K.
+
+## Changes
+- **Database**: Initialized SQLite database with `measurements` table using Kysely and better-sqlite3.
+- **Shelly Service**: Implemented polling for Shelly 3EM `/status` endpoint.
+- **Sol-Ark Service**: Implemented Modbus TCP polling (currently using mock data structure until device is available).
+- **TOU Engine**: Implemented `tou_rates` table and service for dynamic rate lookup based on time and day.
+- **Data Ingestion**: Created an orchestrator service to poll devices and save data to DB.
+- **API**: Created a simple Express server with a poll trigger endpoint.
+
+## Verification Results
+
+### Automated Tests
+I ran the following verification scripts:
+
+1.  **Database Test** (`src/test-db.ts`):
+    - Confirmed table creation and data insertion.
+    - Status: **PASSED**
+2.  **Shelly Test** (`src/test-shelly.ts`):
+    - Confirmed parsing of Shelly API response structure (mocked).
+    - Status: **PASSED**
+3.  **Sol-Ark Test** (`src/test-solark.ts`):
+    - Confirmed Modbus service structure and data mapping (mocked).
+    - Status: **PASSED**
+4.  **TOU Test** (`src/test-tou.ts`):
+    - Confirmed rate selection for distinct times and days (Weekday/Weekend/Peak/Off-Peak).
+    - Status: **PASSED**
+
+## Next Steps
+- Implement Frontend (Dashboard).

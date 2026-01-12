@@ -1,44 +1,36 @@
-# Implementation Plan - Backend Implementation
+# Implementation Plan - Custom Calculators & TOU Engine
 
-This plan details the steps to implement the backend services, including the SQLite database, Shelly 3EM polling, and Sol-Ark Modbus integration.
+This plan details the implementation of the calculation engine for derived metrics and Time-Of-Use (TOU) cost estimation.
 
 ## User Review Required
 > [!NOTE]
-> We will use `better-sqlite3` for the database and `kysely` for type-safe query building.
-> We will use `modbus-serial` for Sol-Ark communication.
+> We will implement a configuration-based TOU system.
+> Custom calculators will be hardcoded initially for safety and performance, but designed to be extensible.
 
 ## Proposed Changes
 
-### Backend Dependencies
-- Install `better-sqlite3`, `kysely`, `modbus-serial`, `axios` (for Shelly API).
-- Install dev dependencies: `@types/better-sqlite3`, `@types/modbus-serial`.
-
-### Database Structure
-- Create `src/db/` directory.
-- `src/db/schema.ts`: Define database schema (Tables: `measurements`, `tou_rates`, etc.).
-- `src/db/index.ts`: Database connection setup.
-- `src/db/migrations/`: Initial schema migration.
-
-### Table Schema (Initial)
-- **measurements**:
-    - `id` (INTEGER PRIMARY KEY)
-    - `timestamp` (INTEGER NOT NULL)
-    - `source` (TEXT) 'shelly' | 'solark'
-    - `data` (JSON) - Store raw/structured reading to avoid rigid schema for now, or distinct columns.
-    - *Decision*: We will use distinct columns for core metrics and JSON for distinct specific data to allow querying efficiency for graphs.
-    - Columns: `active_power_total`, `energy_total`, `pv_power`, `battery_soc`, `json_dump`.
+### Data Model Updates
+- **tou_rates**: New table to store rate schedules.
+    - `id`, `name`, `rate_cents_per_kwh`, `start_time` (HH:MM), `end_time`, `days_of_week`.
+- **calculated_metrics**: Table (or columns in `measurements`) to store results.
+    - *Decision*: We will calculate TOU costs *on query* or *periodically* (snapshot), rather than per-second.
+    - For real-time derived metrics (e.g., `Home Load = Inverter Active Power - Grid Power`), we will compute them during ingestion.
 
 ### Services
-- `src/services/shelly.ts`: Polling logic for Shelly 3EM.
-- `src/services/solark.ts`: Modbus polling for Sol-Ark.
-- `src/services/data-ingestion.ts`: Orchestrates polling and DB storage.
+- `src/services/tou.ts`:
+    - `getRate(timestamp)`: Returns the applicable rate for a given time.
+    - `calculateCost(start, end)`: Aggregates energy usage and applies rates.
+- `src/services/calculator.ts`:
+    - `computeDerivedMetrics(shellyData, solarkData)`:
+        - Example: `Home Load = SolArk Load` or `Grid + PV +/- Battery`.
+
+### Calculator Logic
+- **Home Consumption**:
+    - If SolArk provided: Use SolArk 'Load' or calc `PV - GridSell + GridBuy - BatteryCharge + BatteryDischarge`.
+    - Verification: Compare with Shelly Total Active Power.
 
 ## Verification Plan
 
 ### Automated Tests
-- Create a test script `src/test-db.ts` to write and read from the DB.
-- Create a test script `src/test-shelly.ts` to fetch data from the implementation (mocked or real if IP provided).
-- Create a test script `src/test-solark.ts` to fetch data via Modbus and attempt to write to DB.
-
-### specific constraints
-- DB file location: `backend/energy.db`
+- `src/test-tou.ts`: Verify correct rate selection for different times/days.
+- `src/test-calculator.ts`: Verify derived metric math.
