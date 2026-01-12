@@ -35,6 +35,37 @@ app.post('/api/poll', async (req, res) => {
     }
 });
 
+import { db } from './db';
+
+app.get('/api/measurements/latest', async (req, res) => {
+    try {
+        const latestInfo = await db.selectFrom('measurements')
+            .selectAll()
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .executeTakeFirst();
+
+        res.json(latestInfo || {});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch measurements' });
+    }
+});
+
+app.get('/api/measurements/history', async (req, res) => {
+    try {
+        // Simple history fetch (last 1 hour?)
+        const history = await db.selectFrom('measurements')
+            .selectAll()
+            .orderBy('timestamp', 'desc')
+            .limit(60) // approx last 10 mins if 10s polling
+            .execute();
+        res.json(history.reverse());
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch history' });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Backend listening at http://localhost:${port}`);
 });

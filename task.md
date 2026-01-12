@@ -8,7 +8,7 @@
     - [x] Implement Sol-Ark 15K Data Fetching (`modbus-serial`) <!-- id: 12 -->
     - [x] Implement Custom Calculators & TOU Engine <!-- id: 13 -->
     - [x] Create API Endpoints for Frontend <!-- id: 5 -->
-- [ ] Implement Frontend (Dashboard) <!-- id: 6 -->
+- [/] Implement Frontend (Dashboard) <!-- id: 6 -->
     - [ ] Setup React/Vite Project <!-- id: 7 -->
     - [ ] Create Dashboard Layout <!-- id: 8 -->
     - [ ] Implement Real-time Power Chart <!-- id: 9 -->
