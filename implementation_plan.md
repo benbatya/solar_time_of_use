@@ -1,36 +1,42 @@
-# Implementation Plan - Custom Calculators & TOU Engine
+# Implementation Plan - Frontend Dashboard
 
-This plan details the implementation of the calculation engine for derived metrics and Time-Of-Use (TOU) cost estimation.
+This plan details the implementation of the React frontend for SolarTimeOfUse.
 
 ## User Review Required
 > [!NOTE]
-> We will implement a configuration-based TOU system.
-> Custom calculators will be hardcoded initially for safety and performance, but designed to be extensible.
+> We will use `recharts` for data visualization.
+> The dashboard will poll the backend API for updates (simple polling for now, SSE/WebSockets later if needed).
 
 ## Proposed Changes
 
-### Data Model Updates
-- **tou_rates**: New table to store rate schedules.
-    - `id`, `name`, `rate_cents_per_kwh`, `start_time` (HH:MM), `end_time`, `days_of_week`.
-- **calculated_metrics**: Table (or columns in `measurements`) to store results.
-    - *Decision*: We will calculate TOU costs *on query* or *periodically* (snapshot), rather than per-second.
-    - For real-time derived metrics (e.g., `Home Load = Inverter Active Power - Grid Power`), we will compute them during ingestion.
+### Dependencies
+- Install `recharts`, `lucide-react` (icons), `axios`, `clsx`, `tailwind-merge`.
 
-### Services
-- `src/services/tou.ts`:
-    - `getRate(timestamp)`: Returns the applicable rate for a given time.
-    - `calculateCost(start, end)`: Aggregates energy usage and applies rates.
-- `src/services/calculator.ts`:
-    - `computeDerivedMetrics(shellyData, solarkData)`:
-        - Example: `Home Load = SolArk Load` or `Grid + PV +/- Battery`.
+### Component Structure
+- `src/components/layout/DashboardLayout.tsx`: Main shell with sidebar/header.
+- `src/components/dashboard/OverviewCards.tsx`: Summary widgets (Current Power, Today's Energy, Battery SOC).
+- `src/components/charts/PowerChart.tsx`: Real-time line chart.
+- `src/components/charts/EnergyChart.tsx`: Historical bar chart.
+- `src/hooks/useEnergyData.ts`: React hook to fetch data from backend.
 
-### Calculator Logic
-- **Home Consumption**:
-    - If SolArk provided: Use SolArk 'Load' or calc `PV - GridSell + GridBuy - BatteryCharge + BatteryDischarge`.
-    - Verification: Compare with Shelly Total Active Power.
+### Dashboard Layout
+- **Header**: Title and Connection Status.
+- **Grid Layout**:
+    - Top Row: 4 Configurable Cards (Grid, Solar, Battery, Home Load).
+    - Middle Row: Main Power Flow Chart (Power vs Time).
+    - Bottom Row: Energy Usage/Cost bar charts.
+    - Rate Indicator: Show current TOU rate color-coded.
+
+### Visual Style
+- Dark/Light mode support (defaulting to system or Dark for "Command center" feel).
+- Tailwind colors: Slate/Zinc background, Vivid colors for phases/sources (Yellow=Solar, Green=Grid, Blue=Load).
 
 ## Verification Plan
 
 ### Automated Tests
-- `src/test-tou.ts`: Verify correct rate selection for different times/days.
-- `src/test-calculator.ts`: Verify derived metric math.
+- Basic rendering tests for components.
+- We will rely heavily on manual verification `npm run dev` and viewing the dashboard.
+
+### Manual Verification
+- Verify data updates every 5-10s.
+- Verify chart responsiveness.

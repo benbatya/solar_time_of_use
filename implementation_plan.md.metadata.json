@@ -1,5 +1,5 @@
 {
   "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
-  "summary":  "Implementation plan for Custom Calculators and TOU Engine.",
-  "updatedAt":  "2026-01-12T20:05:26.008077473Z"
+  "summary":  "Implementation plan for the Frontend Dashboard using React, TailwindCSS, and Recharts.",
+  "updatedAt":  "2026-01-12T20:20:16.645409731Z"
 }
