@@ -6,7 +6,7 @@ export class DataIngestionService {
     private shelly: ShellyService;
     private solark: SolArkService;
     private interval: NodeJS.Timeout | null = null;
-    private intervalMs: number = 10000; // 10s default
+    private intervalMs: number = 20000; // 20s default
 
     private shellyIp: string = "mock";
     private solarkIp: string = "mock";
@@ -24,6 +24,7 @@ export class DataIngestionService {
             for (const config of configs) {
                 if (config.key === 'shelly_ip') this.shellyIp = config.value;
                 if (config.key === 'solark_ip') this.solarkIp = config.value;
+                if (config.key === 'poll_frequency_seconds') this.intervalMs = parseInt(config.value, 10) * 1000;
             }
             console.log(`Loaded config: Shelly=${this.shellyIp}, SolArk=${this.solarkIp}`);
             // Re-instantiate services with new IPs
@@ -44,18 +45,18 @@ export class DataIngestionService {
             // In production, use real IP. For now if IP is 'mock', return mock?
             // Or just try/catch and log error if device not found.
 
-            // const shellyData = await this.shelly.getStatus();
-            // await db.insertInto('measurements').values({
-            //   timestamp,
-            //   source: 'shelly',
-            //   data: JSON.stringify(shellyData.raw),
-            //   active_power_total: shellyData.total_power,
-            //   energy_total: shellyData.total_energy,
-            //   pv_power: null,
-            //   battery_soc: null
-            // }).execute();
+            const shellyData = await this.shelly.getStatus();
+            await db.insertInto('measurements').values({
+                timestamp,
+                source: 'shelly',
+                data: JSON.stringify(shellyData.raw),
+                active_power_total: shellyData.total_power,
+                energy_total: shellyData.total_energy,
+                pv_power: null,
+                battery_soc: null
+            }).execute();
 
-            // console.log('Shelly data saved');
+            console.log('Shelly data saved');
         } catch (err) {
             console.error('Failed to poll Shelly:', err);
         }

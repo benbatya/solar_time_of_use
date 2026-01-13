@@ -49,6 +49,7 @@ export const initializeDatabase = async () => {
 
       INSERT OR IGNORE INTO configuration (key, value) VALUES ('shelly_ip', '192.168.1.100');
       INSERT OR IGNORE INTO configuration (key, value) VALUES ('solark_ip', '192.168.1.101');
+      INSERT OR IGNORE INTO configuration (key, value) VALUES ('poll_frequency_seconds', '20');
     `);
 
   console.log('Database initialized');
