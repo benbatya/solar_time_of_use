@@ -23,7 +23,7 @@ export const Dashboard = () => {
                     <PowerChart history={history} />
                 </div>
                 <div className="lg:col-span-2">
-                    <EnergyChart history={history} />
+                    <EnergyChart history={history} unit="Wh" />
                 </div>
             </div>
         </>

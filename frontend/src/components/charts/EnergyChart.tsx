@@ -4,9 +4,10 @@ import type { Measurement } from '../../hooks/useEnergyData';
 
 interface EnergyChartProps {
     history: Measurement[];
+    unit?: string;
 }
 
-export const EnergyChart: React.FC<EnergyChartProps> = ({ history }) => {
+export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh' }) => {
     const dataWithDelta = React.useMemo(() => {
         return history.map((item, index) => {
             const previous = history[index - 1];
@@ -37,7 +38,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history }) => {
                             cursor={{ fill: '#334155', opacity: 0.4 }}
                         />
                         <Legend />
-                        <Bar dataKey="energy_delta" name="Energy Delta (kWh)" fill="#8b5cf6" />
+                        <Bar dataKey="energy_delta" name={`Energy Delta (${unit})`} fill="#8b5cf6" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
