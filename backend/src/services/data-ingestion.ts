@@ -21,15 +21,25 @@ export class DataIngestionService {
     async loadConfig() {
         try {
             const configs = await db.selectFrom('configuration').selectAll().execute();
+            let solarkPort = 502;
+
             for (const config of configs) {
                 if (config.key === 'shelly_ip') this.shellyIp = config.value;
-                if (config.key === 'solark_ip') this.solarkIp = config.value;
+                if (config.key === 'solark_ip') {
+                    if (config.value.includes(':')) {
+                        const parts = config.value.split(':');
+                        this.solarkIp = parts[0];
+                        solarkPort = parseInt(parts[1], 10);
+                    } else {
+                        this.solarkIp = config.value;
+                    }
+                }
                 if (config.key === 'poll_frequency_seconds') this.intervalMs = parseInt(config.value, 10) * 1000;
             }
-            console.log(`Loaded config: Shelly=${this.shellyIp}, SolArk=${this.solarkIp}`);
+            console.log(`Loaded config: Shelly=${this.shellyIp}, SolArk=${this.solarkIp}:${solarkPort}`);
             // Re-instantiate services with new IPs
             this.shelly = new ShellyService(this.shellyIp);
-            this.solark = new SolArkService(this.solarkIp);
+            this.solark = new SolArkService(this.solarkIp, solarkPort);
         } catch (err) {
             console.error('Failed to load config:', err);
         }

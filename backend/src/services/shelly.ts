@@ -24,29 +24,32 @@ export class ShellyService {
 
     async getStatus(): Promise<ShellyData> {
         try {
-            const response = await axios.get(`http://${this.ip}/status`);
+            const response = await axios.post(`http://${this.ip}/rpc`, {
+                id: 1,
+                method: "Shelly.GetStatus",
+                params: ""
+            });
             const data = response.data;
 
-            // Extract relevant data from Shelly 3EM /status response
-            // Note: This matches the typical Shelly 3EM JSON structure
-            const em = data.emeters;
+            // Extract relevant data from Shelly Pro 3EM RPC response
+            const em = data.result['em:0'];
+            const emData = data.result['emdata:0'];
 
-            const total_power = em[0].power + em[1].power + em[2].power;
-            const total_energy = em[0].total + em[1].total + em[2].total; // Total usage in Wh often
+            const total_power = em.a_act_power + em.b_act_power + em.c_act_power;
+            const total_energy = emData.a_total_act_energy + emData.b_total_act_energy + emData.c_total_act_energy;
 
-            // Assuming emeters array index 0=A, 1=B, 2=C
             return {
                 total_power,
-                total_energy: total_energy / 1000, // Convert to kWh if needed, but keeping consistent is key. Let's assume Wh from device.
-                voltage_a: em[0].voltage,
-                voltage_b: em[1].voltage,
-                voltage_c: em[2].voltage,
-                current_a: em[0].current,
-                current_b: em[1].current,
-                current_c: em[2].current,
-                power_factor_a: em[0].pf,
-                power_factor_b: em[1].pf,
-                power_factor_c: em[2].pf,
+                total_energy, // This is in Wh based on typical Shelly output, or match previous unit
+                voltage_a: em.a_voltage,
+                voltage_b: em.b_voltage,
+                voltage_c: em.c_voltage,
+                current_a: em.a_current,
+                current_b: em.b_current,
+                current_c: em.c_current,
+                power_factor_a: em.a_pf,
+                power_factor_b: em.b_pf,
+                power_factor_c: em.c_pf,
                 raw: data
             };
         } catch (error) {
