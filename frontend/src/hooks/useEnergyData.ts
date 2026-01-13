@@ -12,41 +12,51 @@ export interface Measurement {
 }
 
 export const useEnergyData = (range: string = 'hour') => {
-    const [latest, setLatest] = useState<Measurement | null>(null);
+    const [realtime, setRealtime] = useState<Measurement[]>([]);
     const [history, setHistory] = useState<Measurement[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = async () => {
+    const fetchRealtime = async () => {
         try {
-            // In dev, we might need to proxy or use full URL. assuming proxy in vite.config or CORS
-            // For now, let's assume valid setup.
-            const [latestRes, historyRes] = await Promise.all([
-                axios.get('/api/measurements/latest'),
-                axios.get('/api/measurements/history', { params: { range } })
-            ]);
+            const res = await axios.get('/api/measurements/realtime');
+            setRealtime(res.data);
+        } catch (err) {
+            console.error('Failed to fetch realtime data', err);
+        }
+    };
 
-            let historyData = historyRes.data;
+    const fetchHistory = async () => {
+        try {
+            const res = await axios.get('/api/measurements/history', { params: { range } });
+            let historyData = res.data;
             if (range !== 'hour') {
                 historyData = historyData.map((item: Measurement) => ({
                     ...item,
                     energy_total: item.energy_total / 1000
                 }));
             }
-
-            setLatest(latestRes.data);
             setHistory(historyData);
-            setLoading(false);
         } catch (err) {
-            console.error('Failed to fetch energy data', err);
-            setLoading(false);
+            console.error('Failed to fetch history data', err);
         }
     };
 
     useEffect(() => {
-        fetchData();
-        const interval = setInterval(fetchData, 60000); // 60s poll
-        return () => clearInterval(interval);
-    }, [range]); // Re-fetch when range changes
+        const init = async () => {
+            setLoading(true);
+            await Promise.all([fetchRealtime(), fetchHistory()]);
+            setLoading(false);
+        };
+        init();
 
-    return { latest, history, loading };
+        const rtInterval = setInterval(fetchRealtime, 20000); // 20s for realtime
+        const histInterval = setInterval(fetchHistory, 60000); // 60s for history
+
+        return () => {
+            clearInterval(rtInterval);
+            clearInterval(histInterval);
+        };
+    }, [range]);
+
+    return { realtime, history, loading };
 };

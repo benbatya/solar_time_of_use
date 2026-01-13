@@ -94,6 +94,25 @@ app.get('/api/measurements/latest', async (req, res) => {
     }
 });
 
+app.get('/api/measurements/realtime', async (req, res) => {
+    try {
+        const now = Date.now();
+        const cutoff = now - 60 * 60 * 1000; // Last 60 minutes
+
+        const results = await db.selectFrom('measurements')
+            .selectAll()
+            .where('timestamp', '>', cutoff)
+            .orderBy('timestamp', 'desc')
+            .execute();
+
+        // Return oldest to newest for charts
+        res.json(results.reverse());
+    } catch (error) {
+        console.error('Failed to fetch realtime measurements:', error);
+        res.status(500).json({ error: 'Failed to fetch realtime measurements' });
+    }
+});
+
 app.get('/api/measurements/history', async (req, res) => {
     try {
         // Simple history fetch (last 1 hour?)

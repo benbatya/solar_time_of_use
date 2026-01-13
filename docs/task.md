@@ -11,6 +11,6 @@
 - [/] Implement Frontend (Dashboard) <!-- id: 6 -->
     - [ ] Setup React/Vite Project <!-- id: 7 -->
     - [ ] Create Dashboard Layout <!-- id: 8 -->
-    - [ ] Implement Real-time Power Chart <!-- id: 9 -->
+    - [x] Implement Real-time Power Chart <!-- id: 9 -->
     - [ ] Implement Historical Energy Usage Chart <!-- id: 10 -->
 - [ ] Verification & Testing <!-- id: 11 -->

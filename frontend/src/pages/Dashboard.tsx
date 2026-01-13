@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { OverviewCards } from '../components/dashboard/OverviewCards';
-import { PowerChart } from '../components/charts/PowerChart';
 import { EnergyChart } from '../components/charts/EnergyChart';
+import { RealtimeChart } from '../components/charts/RealtimeChart';
 import { useEnergyData } from '../hooks/useEnergyData';
 
 export const Dashboard = () => {
     const [timeRange, setTimeRange] = useState('hour');
-    const { latest, history, loading } = useEnergyData(timeRange);
+    const { realtime, history, loading } = useEnergyData(timeRange);
+    const latest = realtime.length > 0 ? realtime[realtime.length - 1] : null;
 
-    if (loading && !latest) {
+    if (loading && !realtime) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
                 <div className="animate-pulse">Connecting to Energy System...</div>
@@ -33,9 +34,10 @@ export const Dashboard = () => {
             </div>
 
             <OverviewCards data={latest} />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="lg:col-span-2">
-                    <PowerChart history={history} />
+                    <RealtimeChart data={realtime} />
                 </div>
                 <div className="lg:col-span-2">
                     <EnergyChart history={history} unit={timeRange === 'hour' ? 'Wh' : 'kWh'} range={timeRange} />
