@@ -28,6 +28,15 @@ def start_process(command, cwd):
     processes.append(process)
     return process
 
+def check_and_install_dependencies(directory):
+    node_modules_path = os.path.join(directory, 'node_modules')
+    if not os.path.exists(node_modules_path):
+        print(f"Dependencies missing in {directory}. Installing...")
+        subprocess.check_call(['npm', 'install'], cwd=directory)
+        print(f"Dependencies installed in {directory}.")
+    else:
+        print(f"Dependencies already installed in {directory}.")
+
 def cleanup(sig, frame):
     print("\nStopping services...")
     for p in processes:
@@ -42,6 +51,9 @@ def cleanup(sig, frame):
 signal.signal(signal.SIGINT, cleanup)
 
 def main():
+    check_and_install_dependencies(BACKEND_DIR)
+    check_and_install_dependencies(FRONTEND_DIR)
+
     backend_running = is_port_in_use(BACKEND_PORT)
     frontend_running = is_port_in_use(FRONTEND_PORT)
 
