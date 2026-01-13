@@ -22,7 +22,13 @@ export interface TourRatesTable {
   days_of_week: string; // JSON string of numbers [0-6] 0=Sun
 }
 
+export interface ConfigurationTable {
+  key: string;
+  value: string;
+}
+
 export interface Database {
+  configuration: ConfigurationTable;
   measurements: MeasurementsTable;
   tou_rates: TourRatesTable;
 }

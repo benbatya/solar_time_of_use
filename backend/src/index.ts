@@ -1,8 +1,10 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 import { initializeDatabase } from './db';
 import { DataIngestionService } from './services/data-ingestion';
 
 const app = express();
+app.use(bodyParser.json());
 const port = 3000;
 
 // Initialize Database
@@ -15,10 +17,11 @@ try {
 
 // Start Data Ingestion
 // TODO: Load IPs from config/env
-const shellyIp = process.env.SHELLY_IP || '192.168.1.100';
-const solarkIp = process.env.SOLARK_IP || '192.168.1.101';
 
-const ingestionService = new DataIngestionService(shellyIp, solarkIp);
+
+
+const ingestionService = new DataIngestionService();
+ingestionService.start();
 // ingestionService.start(); // Uncomment to start polling automatically, or control via API
 
 app.get('/', (req, res) => {
@@ -36,6 +39,45 @@ app.post('/api/poll', async (req, res) => {
 });
 
 import { db } from './db';
+
+
+app.get('/api/config', async (req, res) => {
+    try {
+        const configs = await db.selectFrom('configuration').selectAll().execute();
+        const configMap: Record<string, string> = {};
+        for (const c of configs) {
+            configMap[c.key] = c.value;
+        }
+        res.json(configMap);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch config' });
+    }
+});
+
+app.post('/api/config', async (req, res) => {
+    try {
+        const { shelly_ip, solark_ip } = req.body;
+        if (shelly_ip) {
+            await db.insertInto('configuration')
+                .values({ key: 'shelly_ip', value: shelly_ip })
+                .onConflict((oc) => oc.column('key').doUpdateSet({ value: shelly_ip }))
+                .execute();
+        }
+        if (solark_ip) {
+            await db.insertInto('configuration')
+                .values({ key: 'solark_ip', value: solark_ip })
+                .onConflict((oc) => oc.column('key').doUpdateSet({ value: solark_ip }))
+                .execute();
+        }
+        
+        await ingestionService.loadConfig(); // Reload service
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update config' });
+    }
+});
+
 
 app.get('/api/measurements/latest', async (req, res) => {
     try {

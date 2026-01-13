@@ -8,10 +8,32 @@ export class DataIngestionService {
     private interval: NodeJS.Timeout | null = null;
     private intervalMs: number = 10000; // 10s default
 
-    constructor(shellyIp: string, solarkIp: string) {
-        this.shelly = new ShellyService(shellyIp);
-        this.solark = new SolArkService(solarkIp);
+    private shellyIp: string = "mock";
+    private solarkIp: string = "mock";
+
+    constructor() {
+        // Initialize with mocks/defaults, will reload on start
+        this.shelly = new ShellyService(this.shellyIp);
+        this.solark = new SolArkService(this.solarkIp);
     }
+
+
+    async loadConfig() {
+        try {
+            const configs = await db.selectFrom('configuration').selectAll().execute();
+            for (const config of configs) {
+                if (config.key === 'shelly_ip') this.shellyIp = config.value;
+                if (config.key === 'solark_ip') this.solarkIp = config.value;
+            }
+            console.log(`Loaded config: Shelly=${this.shellyIp}, SolArk=${this.solarkIp}`);
+            // Re-instantiate services with new IPs
+            this.shelly = new ShellyService(this.shellyIp);
+            this.solark = new SolArkService(this.solarkIp);
+        } catch (err) {
+            console.error('Failed to load config:', err);
+        }
+    }
+
 
     async poll() {
         const timestamp = Date.now();
@@ -57,7 +79,8 @@ export class DataIngestionService {
         }
     }
 
-    start(intervalMs?: number) {
+    async start(intervalMs?: number) {
+        await this.loadConfig();
         if (intervalMs) this.intervalMs = intervalMs;
         this.poll(); // Initial poll
         this.interval = setInterval(() => this.poll(), this.intervalMs);
