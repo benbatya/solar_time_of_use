@@ -69,7 +69,7 @@ app.post('/api/config', async (req, res) => {
                 .onConflict((oc) => oc.column('key').doUpdateSet({ value: solark_ip }))
                 .execute();
         }
-        
+
         await ingestionService.loadConfig(); // Reload service
         res.json({ success: true });
     } catch (error) {
@@ -97,12 +97,74 @@ app.get('/api/measurements/latest', async (req, res) => {
 app.get('/api/measurements/history', async (req, res) => {
     try {
         // Simple history fetch (last 1 hour?)
-        const history = await db.selectFrom('measurements')
-            .selectAll()
-            .orderBy('timestamp', 'desc')
-            .limit(60) // approx last 10 mins if 10s polling
-            .execute();
-        res.json(history.reverse());
+        const range = (req.query.range as string) || 'hour';
+        const now = Date.now();
+
+        let results: any[] = [];
+        const { sql } = require('kysely');
+
+        if (range === 'day') {
+            // 24h by hour
+            const cutoff = now - 24 * 60 * 60 * 1000;
+            const query = await sql`
+                SELECT 
+                    MAX(timestamp) as timestamp, 
+                    source, 
+                    MAX(active_power_total) as active_power_total, 
+                    MAX(energy_total) as energy_total, 
+                    MAX(pv_power) as pv_power, 
+                    MAX(battery_soc) as battery_soc
+                FROM measurements 
+                WHERE timestamp > ${cutoff} 
+                GROUP BY strftime('%Y-%m-%d %H', datetime(timestamp/1000, 'unixepoch')) 
+                ORDER BY timestamp DESC
+             `.execute(db);
+            results = query.rows;
+        } else if (range === 'week') {
+            // 7 days by day
+            const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+            const query = await sql`
+                SELECT 
+                    MAX(timestamp) as timestamp, 
+                    source, 
+                    MAX(active_power_total) as active_power_total, 
+                    MAX(energy_total) as energy_total, 
+                    MAX(pv_power) as pv_power, 
+                    MAX(battery_soc) as battery_soc
+                FROM measurements 
+                WHERE timestamp > ${cutoff} 
+                GROUP BY strftime('%Y-%m-%d', datetime(timestamp/1000, 'unixepoch')) 
+                ORDER BY timestamp DESC
+             `.execute(db);
+            results = query.rows;
+        } else if (range === 'month') {
+            // 30 days by day
+            const cutoff = now - 30 * 24 * 60 * 60 * 1000;
+            const query = await sql`
+                SELECT 
+                    MAX(timestamp) as timestamp, 
+                    source, 
+                    MAX(active_power_total) as active_power_total, 
+                    MAX(energy_total) as energy_total, 
+                    MAX(pv_power) as pv_power, 
+                    MAX(battery_soc) as battery_soc
+                FROM measurements 
+                WHERE timestamp > ${cutoff} 
+                GROUP BY strftime('%Y-%m-%d', datetime(timestamp/1000, 'unixepoch')) 
+                ORDER BY timestamp DESC
+             `.execute(db);
+            results = query.rows;
+        } else {
+            // 'hour' or default
+            const cutoff = now - 60 * 60 * 1000;
+            results = await db.selectFrom('measurements')
+                .selectAll()
+                .where('timestamp', '>', cutoff)
+                .orderBy('timestamp', 'desc')
+                .execute();
+        }
+
+        res.json(results.reverse());
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
     }
