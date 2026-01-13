@@ -25,7 +25,7 @@ export const Dashboard = () => {
                     onChange={(e) => setTimeRange(e.target.value)}
                     className="bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="hour">Last Hour</option>
+                    <option value="hour">Last 60 Minutes</option>
                     <option value="day">Last 24 Hours</option>
                     <option value="week">Last 7 Days</option>
                     <option value="month">Last 30 Days</option>
@@ -38,7 +38,7 @@ export const Dashboard = () => {
                     <PowerChart history={history} />
                 </div>
                 <div className="lg:col-span-2">
-                    <EnergyChart history={history} unit={timeRange === 'hour' ? 'Wh' : 'kWh'} />
+                    <EnergyChart history={history} unit={timeRange === 'hour' ? 'Wh' : 'kWh'} range={timeRange} />
                 </div>
             </div>
         </>

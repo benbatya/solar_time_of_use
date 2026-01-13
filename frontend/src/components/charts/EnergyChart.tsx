@@ -5,12 +5,18 @@ import type { Measurement } from '../../hooks/useEnergyData';
 interface EnergyChartProps {
     history: Measurement[];
     unit?: string;
+    range?: string;
 }
 
-export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh' }) => {
+export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'hour' }) => {
     const dataWithDelta = React.useMemo(() => {
         return history.map((item, index) => {
             const previous = history[index - 1];
+            // If previous is missing (start of range), or if simple update, delta might need care.
+            // For aggregated queries (day/week/month), simple diff might be okay if rows are ordered.
+            // Backend returns reverse chronological, here we might need chronological.
+            // Actually API returns reverse(), so [oldest, ..., newest].
+
             const delta = previous
                 ? Math.max(0, item.energy_total - previous.energy_total)
                 : 0;
@@ -27,7 +33,13 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh' 
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis
                             dataKey="timestamp"
-                            tickFormatter={(ts) => new Date(ts).toLocaleTimeString()}
+                            tickFormatter={(ts) => {
+                                const date = new Date(ts);
+                                if (range === 'week' || range === 'month') {
+                                    return date.toLocaleDateString();
+                                }
+                                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            }}
                             stroke="#94a3b8"
                             fontSize={12}
                         />
