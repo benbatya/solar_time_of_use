@@ -7,14 +7,22 @@ interface EnergyChartProps {
 }
 
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history }) => {
-    // Aggregate data if needed, or simple bar for recent history
-    // For now just show recent data points as bars
+    const dataWithDelta = React.useMemo(() => {
+        return history.map((item, index) => {
+            const previous = history[index - 1];
+            const delta = previous
+                ? Math.max(0, item.energy_total - previous.energy_total)
+                : 0;
+            return { ...item, energy_delta: delta };
+        });
+    }, [history]);
+
     return (
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg mt-6">
-            <h2 className="text-lg font-bold mb-4">Energy Usage (Recent)</h2>
+            <h2 className="text-lg font-bold mb-4">Energy Usage (Delta)</h2>
             <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={history}>
+                    <BarChart data={dataWithDelta}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis
                             dataKey="timestamp"
@@ -29,7 +37,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history }) => {
                             cursor={{ fill: '#334155', opacity: 0.4 }}
                         />
                         <Legend />
-                        <Bar dataKey="energy_total" name="Total Energy (kWh)" fill="#8b5cf6" />
+                        <Bar dataKey="energy_delta" name="Energy Delta (kWh)" fill="#8b5cf6" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
