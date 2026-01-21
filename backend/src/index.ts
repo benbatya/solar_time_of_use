@@ -170,16 +170,24 @@ app.get('/api/measurements/history', async (req, res) => {
             results = query.rows;
         } else {
             // 'hour' or default - 60 minutes by minute
-            const cutoff = now - 60 * 60 * 1000;
+            // Align to current minute floor
+            const currentMinute = Math.floor(now / 60000) * 60000;
+            const startMinute = currentMinute - 59 * 60000;
+
             const query = await sql`
+                WITH RECURSIVE generated_minutes(minute_ts) AS (
+                    SELECT ${startMinute}
+                    UNION ALL
+                    SELECT minute_ts + 60000 FROM generated_minutes WHERE minute_ts < ${currentMinute}
+                )
                 SELECT 
-                    MAX(timestamp) as timestamp, 
-                    source, 
-                    MAX(energy_total) as energy_total
-                FROM measurements 
-                WHERE timestamp > ${cutoff} 
-                GROUP BY strftime('%Y-%m-%d %H:%M', datetime(timestamp/1000, 'unixepoch')) 
-                ORDER BY timestamp DESC
+                    gm.minute_ts as timestamp, 
+                    COALESCE(MAX(m.source), 'generated') as source, 
+                    MAX(m.energy_total) as energy_total
+                FROM generated_minutes gm
+                LEFT JOIN measurements m ON m.timestamp >= gm.minute_ts AND m.timestamp < gm.minute_ts + 60000
+                GROUP BY gm.minute_ts
+                ORDER BY gm.minute_ts DESC
              `.execute(db);
             results = query.rows;
         }

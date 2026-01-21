@@ -10,86 +10,54 @@ interface EnergyChartProps {
 
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'hour' }) => {
     const dataWithDelta = React.useMemo(() => {
-        if (range === 'hour') {
-            const now = Date.now();
-            // align to minute
-            const end = Math.floor(now / 60000) * 60000;
-            const start = end - 59 * 60000; // 60 minutes total (including end)
+        // Backend now handles valid 60-datapoint return for 'hour' range via CTE.
+        // We just need to calculate deltas.
 
-            // Create map of existing data normalized to minute
-            const dataMap = new Map();
-            history.forEach(item => {
-                const minuteTs = Math.floor(item.timestamp / 60000) * 60000;
-                dataMap.set(minuteTs, item);
-            });
+        // Data is returned reverse chronological (DESC), so [newest, ..., oldest]
+        // But for delta calculation we need (current - previous_in_time).
+        // If the array is [newest, oldest], 'previous' in loop usually refers to older index? 
+        // Array.map index-1 is the *newer* element if sorted DESC? 
+        // Wait, standard map iteration: index 0 (newest), index 1 (older).
+        // previous = history[index-1] -> if index=0, previous=undefined.
 
-            const filledData = [];
-            let lastEnergyTotal = history.length > 0 ? history[0].energy_total : 0;
-            // Use the first available data point's energy strictly for the first non-gap delta calculation if possible.
-            // But we iterate chronologically. 
-            // Better strategy: Just iterate the 60 minutes.
+        // Let's create a sorted copy for easier logic? Or just handle it.
+        // Charts usually want Oldest -> Newest.
+        // The backend returns DESC.
+        // The endpoint does `res.json(results.reverse())` at the end!
+        // So the frontend receives ASCending order (Oldest -> Newest).
 
-            for (let i = 0; i < 60; i++) {
-                const ts = start + i * 60000;
-                const match = dataMap.get(ts);
+        // So index 0 is Oldest. index 1 is Newest.
+        // previous = history[index-1] is the older point. This is correct.
 
-                if (match) {
-                    // We have data
-                    // Try to find previous real data point's energy for accurate delta
-                    // If this is the very first point of our window, we might not have 'previous'.
-                    // Check if we have a point in history strictly before this match (not in this window)?
-                    // The history array passed in is likely just the window.
-
-                    // Simple delta within window:
-                    // If we have a 'lastEnergyTotal' from a previous iteration, use it.
-                    // If we don't (start of chart), delta is 0.
-
-                    // Problem: if lastEnergyTotal was from 5 minutes ago, delta is huge.
-                    // But that represents the usage over the gap.
-
-                    // Special case: First item in loop.
-                    let delta = 0;
-                    if (i > 0 || lastEnergyTotal > 0) {
-                        // How to distinguish "uninitialized" lastEnergyTotal from 0?
-                        // Device energy_total is usually large (kWh counter).
-                        if (lastEnergyTotal > 0) {
-                            delta = Math.max(0, match.energy_total - lastEnergyTotal);
-                        }
-                    }
-
-                    lastEnergyTotal = match.energy_total;
-                    filledData.push({ ...match, timestamp: ts, energy_delta: delta });
-                } else {
-                    // No data. 
-                    // Delta 0.
-                    // Do NOT update lastEnergyTotal (so next real point picks up the diff).
-                    filledData.push({
-                        id: -1,
-                        timestamp: ts,
-                        source: 'generated',
-                        energy_total: lastEnergyTotal, // carry forward for continuity in future deltas if needed?
-                        // Actually if we carry forward lastEnergyTotal, the next REAL point will have a delta 
-                        // equal to (real - last). If last was carried forward, it means 
-                        // the delta across the gap is attributed to the first point AFTER the gap?
-                        // Or we want explicitly 0 bars in the gap.
-                        // Setting energy_delta to 0 achieves the visual.
-
-                        energy_delta: 0
-                    });
-                }
-            }
-            return filledData;
-        }
-
-        // Default logic for other ranges
         return history.map((item, index) => {
             const previous = history[index - 1];
-            const delta = previous
-                ? Math.max(0, item.energy_total - previous.energy_total)
-                : 0;
-            return { ...item, energy_delta: delta };
+            // If item has no energy_total (null/0 from gap), delta is 0?
+            // If previous had no energy_total, delta is 0?
+
+            // Note: If energy_total is null from SQL (gap), what do we get? 
+            // Better-sqlite3/Kysely might return null.
+            // frontend interface says `energy_total: number`.
+
+            const currentTotal = item.energy_total || 0;
+            const previousTotal = previous?.energy_total || 0;
+
+            // If we have a gap (currentTotal is 0/null), delta is 0.
+            // If previous was a gap (previousTotal 0), but current is valid,
+            // delta = current - 0 = huge? No.
+            // If previous is missing/0, we probably shouldn't calculate a huge delta.
+
+            let delta = 0;
+            if (currentTotal > 0 && previousTotal > 0) {
+                delta = Math.max(0, currentTotal - previousTotal);
+            }
+
+            return {
+                ...item,
+                energy_total: currentTotal, // Ensure number for safety
+                energy_delta: delta
+            };
         });
-    }, [history, range]);
+    }, [history]);
 
     return (
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg mt-6">
