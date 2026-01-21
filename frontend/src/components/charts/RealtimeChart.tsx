@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { Measurement } from '../../hooks/useEnergyData';
 
 interface RealtimeChartProps {
@@ -8,14 +8,23 @@ interface RealtimeChartProps {
 
 export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data }) => {
     const chartData = useMemo(() => {
-        return data.map((item, index) => {
-            const previous = data[index - 1];
-            const energyDelta = previous
-                ? Math.max(0, item.energy_total - previous.energy_total)
-                : 0;
+        if (data.length === 0) return [];
+
+        // Find the minimum energy_total in the dataset to use as baseline
+        // Usually the first item if sorted chronologically. 
+        // We assume data is sorted by timestamp (oldest first) coming from useEnergyData -> history?
+        // Actually this is 'realtime' data. 
+        // useEnergyData fetches realtime from /api/measurements/realtime
+
+        // Let's assume strict chronological order for the graph.
+        // If data is [item1, item2], item1 is older.
+        const initialEnergy = data.length > 0 ? data[0].energy_total : 0;
+
+        return data.map((item) => {
+            const energyDelta = Math.max(0, item.energy_total - initialEnergy);
             return {
                 ...item,
-                energy_delta: energyDelta,
+                energy_accumulated: energyDelta, // Renamed for clarity
             };
         });
     }, [data]);
@@ -40,7 +49,7 @@ export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data }) => {
                             labelFormatter={(ts) => new Date(ts).toLocaleString()}
                         />
                         <Legend />
-                        <Bar yAxisId="right" dataKey="energy_delta" name="Energy Usage (Wh)" fill="#8b5cf6" opacity={0.5} barSize={20} />
+                        <Area yAxisId="right" type="monotone" dataKey="energy_accumulated" name="Cumulative Energy (Wh)" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.3} />
                         <Line yAxisId="left" type="monotone" dataKey="active_power_total" name="Grid Power (W)" stroke="#60a5fa" strokeWidth={2} dot={false} />
                         <Line yAxisId="left" type="monotone" dataKey="pv_power" name="Solar Power (W)" stroke="#facc15" strokeWidth={2} dot={false} />
                     </ComposedChart>
