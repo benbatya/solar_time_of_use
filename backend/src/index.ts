@@ -148,17 +148,24 @@ app.get('/api/measurements/history', async (req, res) => {
              `.execute(db);
             results = query.rows;
         } else if (range === 'week') {
-            // 7 days by day
-            const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+            // 7 days by day - 7 data points
+            const currentDay = Math.floor(now / 86400000) * 86400000;
+            const startDay = currentDay - 6 * 86400000;
+
             const query = await sql`
+                WITH RECURSIVE generated_days(day_ts) AS (
+                    SELECT ${startDay}
+                    UNION ALL
+                    SELECT day_ts + 86400000 FROM generated_days WHERE day_ts < ${currentDay}
+                )
                 SELECT 
-                    MAX(timestamp) as timestamp, 
-                    source, 
-                    MAX(energy_total) as energy_total
-                FROM measurements 
-                WHERE timestamp > ${cutoff} 
-                GROUP BY strftime('%Y-%m-%d', datetime(timestamp/1000, 'unixepoch')) 
-                ORDER BY timestamp DESC
+                    gd.day_ts as timestamp, 
+                    COALESCE(MAX(m.source), 'generated') as source, 
+                    MAX(m.energy_total) as energy_total
+                FROM generated_days gd
+                LEFT JOIN measurements m ON m.timestamp >= gd.day_ts AND m.timestamp < gd.day_ts + 86400000
+                GROUP BY gd.day_ts
+                ORDER BY gd.day_ts DESC
              `.execute(db);
             results = query.rows;
         } else if (range === 'month') {
