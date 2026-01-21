@@ -5,10 +5,10 @@ export interface Measurement {
     id: number;
     timestamp: number;
     source: string;
-    active_power_total: number;
+    active_power_total?: number;
     energy_total: number;
-    pv_power: number;
-    battery_soc: number;
+    pv_power?: number;
+    battery_soc?: number;
 }
 
 export const useEnergyData = (range: string = 'hour') => {

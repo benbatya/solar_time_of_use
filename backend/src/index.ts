@@ -133,10 +133,7 @@ app.get('/api/measurements/history', async (req, res) => {
                 SELECT 
                     MAX(timestamp) as timestamp, 
                     source, 
-                    MAX(active_power_total) as active_power_total, 
-                    MAX(energy_total) as energy_total, 
-                    MAX(pv_power) as pv_power, 
-                    MAX(battery_soc) as battery_soc
+                    MAX(energy_total) as energy_total
                 FROM measurements 
                 WHERE timestamp > ${cutoff} 
                 GROUP BY strftime('%Y-%m-%d %H', datetime(timestamp/1000, 'unixepoch')) 
@@ -150,10 +147,7 @@ app.get('/api/measurements/history', async (req, res) => {
                 SELECT 
                     MAX(timestamp) as timestamp, 
                     source, 
-                    MAX(active_power_total) as active_power_total, 
-                    MAX(energy_total) as energy_total, 
-                    MAX(pv_power) as pv_power, 
-                    MAX(battery_soc) as battery_soc
+                    MAX(energy_total) as energy_total
                 FROM measurements 
                 WHERE timestamp > ${cutoff} 
                 GROUP BY strftime('%Y-%m-%d', datetime(timestamp/1000, 'unixepoch')) 
@@ -167,10 +161,7 @@ app.get('/api/measurements/history', async (req, res) => {
                 SELECT 
                     MAX(timestamp) as timestamp, 
                     source, 
-                    MAX(active_power_total) as active_power_total, 
-                    MAX(energy_total) as energy_total, 
-                    MAX(pv_power) as pv_power, 
-                    MAX(battery_soc) as battery_soc
+                    MAX(energy_total) as energy_total
                 FROM measurements 
                 WHERE timestamp > ${cutoff} 
                 GROUP BY strftime('%Y-%m-%d', datetime(timestamp/1000, 'unixepoch')) 
@@ -178,13 +169,19 @@ app.get('/api/measurements/history', async (req, res) => {
              `.execute(db);
             results = query.rows;
         } else {
-            // 'hour' or default
+            // 'hour' or default - 60 minutes by minute
             const cutoff = now - 60 * 60 * 1000;
-            results = await db.selectFrom('measurements')
-                .selectAll()
-                .where('timestamp', '>', cutoff)
-                .orderBy('timestamp', 'desc')
-                .execute();
+            const query = await sql`
+                SELECT 
+                    MAX(timestamp) as timestamp, 
+                    source, 
+                    MAX(energy_total) as energy_total
+                FROM measurements 
+                WHERE timestamp > ${cutoff} 
+                GROUP BY strftime('%Y-%m-%d %H:%M', datetime(timestamp/1000, 'unixepoch')) 
+                ORDER BY timestamp DESC
+             `.execute(db);
+            results = query.rows;
         }
 
         res.json(results.reverse());
