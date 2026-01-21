@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-REMOTE_HOST="raspberrypi"
-REMOTE_USER="pi" # Default to pi, but might be different. SSH config usually handles username if set in host, but user prompt implied just 'raspberrypi'.
+REMOTE_HOST="raspberrypi.local"
+REMOTE_USER="bb8" # Default to pi, but might be different. SSH config usually handles username if set in host, but user prompt implied just 'raspberrypi'.
 # Assuming the user's SSH config handles the username or it is the same as local.
 # Actually, the user command `ssh raspberrypi echo` worked, so the user and key are configured.
 
