@@ -1,11 +1,15 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import path from 'path';
 import { initializeDatabase } from './db';
 import { DataIngestionService } from './services/data-ingestion';
 
 const app = express();
 app.use(bodyParser.json());
 const port = 3000;
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // Initialize Database
 try {
@@ -187,6 +191,10 @@ app.get('/api/measurements/history', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
     }
+});
+
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
 app.listen(port, () => {

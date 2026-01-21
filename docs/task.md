@@ -13,4 +13,7 @@
     - [ ] Create Dashboard Layout <!-- id: 8 -->
     - [x] Implement Real-time Power Chart <!-- id: 9 -->
     - [ ] Implement Historical Energy Usage Chart <!-- id: 10 -->
-- [ ] Verification & Testing <!-- id: 11 -->
+- [x] Verification & Testing <!-- id: 11 -->
+- [x] Deployment to Raspberry Pi <!-- id: 14 -->
+    - [x] Create Deployment Script (`deploy.sh`) <!-- id: 15 -->
+    - [x] Configure PM2 Service <!-- id: 16 -->
