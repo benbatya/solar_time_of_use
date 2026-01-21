@@ -127,17 +127,24 @@ app.get('/api/measurements/history', async (req, res) => {
         const { sql } = require('kysely');
 
         if (range === 'day') {
-            // 24h by hour
-            const cutoff = now - 24 * 60 * 60 * 1000;
+            // 24h by hour - 24 data points
+            const currentHour = Math.floor(now / 3600000) * 3600000;
+            const startHour = currentHour - 23 * 3600000;
+
             const query = await sql`
+                WITH RECURSIVE generated_hours(hour_ts) AS (
+                    SELECT ${startHour}
+                    UNION ALL
+                    SELECT hour_ts + 3600000 FROM generated_hours WHERE hour_ts < ${currentHour}
+                )
                 SELECT 
-                    MAX(timestamp) as timestamp, 
-                    source, 
-                    MAX(energy_total) as energy_total
-                FROM measurements 
-                WHERE timestamp > ${cutoff} 
-                GROUP BY strftime('%Y-%m-%d %H', datetime(timestamp/1000, 'unixepoch')) 
-                ORDER BY timestamp DESC
+                    gh.hour_ts as timestamp, 
+                    COALESCE(MAX(m.source), 'generated') as source, 
+                    MAX(m.energy_total) as energy_total
+                FROM generated_hours gh
+                LEFT JOIN measurements m ON m.timestamp >= gh.hour_ts AND m.timestamp < gh.hour_ts + 3600000
+                GROUP BY gh.hour_ts
+                ORDER BY gh.hour_ts DESC
              `.execute(db);
             results = query.rows;
         } else if (range === 'week') {
