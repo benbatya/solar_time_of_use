@@ -260,6 +260,32 @@ app.get('/api/measurements/history', async (req, res) => {
                 ORDER BY gd.day_ts DESC
              `.execute(db);
             results = query.rows;
+        } else if (range === 'current_week_days') {
+            // All days in the current calendar week (Mon–Sun), split by TOU period
+            const nowDate = new Date(now);
+            const dayOfWeek = nowDate.getDay(); // 0=Sun, 1=Mon, ...
+            const daysFromMonday = (dayOfWeek + 6) % 7; // Mon=0 ... Sun=6
+            const weekStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() - daysFromMonday);
+            const currentDay = Math.floor(now / 86400000) * 86400000;
+            const startDay = weekStart.getTime();
+
+            const query = await sql`
+                WITH RECURSIVE generated_days(day_ts) AS (
+                    SELECT ${startDay}
+                    UNION ALL
+                    SELECT day_ts + 86400000 FROM generated_days WHERE day_ts < ${currentDay}
+                )
+                SELECT
+                    gd.day_ts as timestamp,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END), 0) as energy_off_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END), 0) as energy_mid_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END), 0) as energy_peak
+                FROM generated_days gd
+                LEFT JOIN measurements m ON m.timestamp >= gd.day_ts AND m.timestamp < gd.day_ts + 86400000
+                GROUP BY gd.day_ts
+                ORDER BY gd.day_ts DESC
+             `.execute(db);
+            results = query.rows;
         } else if (range === 'current_month_days') {
             // All days in the current calendar month, split by TOU period
             const nowDate = new Date(now);
