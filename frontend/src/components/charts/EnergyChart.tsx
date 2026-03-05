@@ -73,9 +73,24 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                         <YAxis stroke="#94a3b8" fontSize={12} unit={` ${unit}`} />
                         <Tooltip
                             contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155' }}
-                            labelFormatter={(ts) => new Date(ts).toLocaleString()}
                             cursor={{ fill: '#334155', opacity: 0.4 }}
-                            formatter={(value: number | undefined) => [value == null ? '' : `${value.toFixed(3)} ${unit}`, undefined]}
+                            content={({ active, payload, label }) => {
+                                if (!active || !payload || payload.length === 0) return null;
+                                const total = payload.reduce((sum, entry) => sum + ((entry.value as number) || 0), 0);
+                                return (
+                                    <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '8px 12px', borderRadius: 6 }}>
+                                        <p style={{ color: '#94a3b8', marginBottom: 4 }}>{label != null ? new Date(label).toLocaleString() : ''}</p>
+                                        {payload.map(entry => (
+                                            <p key={entry.dataKey as string} style={{ color: entry.color, margin: '2px 0' }}>
+                                                {entry.name}: {((entry.value as number) || 0).toFixed(3)} {unit}
+                                            </p>
+                                        ))}
+                                        <p style={{ color: 'white', marginTop: 6, borderTop: '1px solid #334155', paddingTop: 4 }}>
+                                            Total: {total.toFixed(3)} {unit}
+                                        </p>
+                                    </div>
+                                );
+                            }}
                         />
                         <Legend />
                         <Bar dataKey="energy_off_peak" stackId="tou" name={`Off-Peak (${unit})`} fill="#22c55e" />
