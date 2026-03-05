@@ -82,7 +82,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                                 const total = payload.reduce((sum, entry) => sum + ((entry.value as number) || 0), 0);
                                 return (
                                     <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '8px 12px', borderRadius: 6 }}>
-                                        <p style={{ color: '#94a3b8', marginBottom: 4 }}>{label != null ? new Date(label).toLocaleString() : ''}</p>
+                                        <p style={{ color: '#94a3b8', marginBottom: 4 }}>{label != null ? (rangeIsDays && range !== 'current_day_hours' ? new Date(label).toLocaleDateString() : new Date(label).toLocaleString()) : ''}</p>
                                         {payload.map(entry => (
                                             <p key={entry.dataKey as string} style={{ color: entry.color, margin: '2px 0' }}>
                                                 {entry.name}: {((entry.value as number) || 0).toFixed(3)} {unit}
