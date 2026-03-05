@@ -50,6 +50,9 @@ export const initializeDatabase = async () => {
       INSERT OR IGNORE INTO configuration (key, value) VALUES ('shelly_ip', '10.0.0.55');
       INSERT OR IGNORE INTO configuration (key, value) VALUES ('solark_ip', '10.0.0.151:4196');
       INSERT OR IGNORE INTO configuration (key, value) VALUES ('poll_frequency_seconds', '20');
+      INSERT OR IGNORE INTO configuration (key, value) VALUES ('tou_rate_peak', '0.55');
+      INSERT OR IGNORE INTO configuration (key, value) VALUES ('tou_rate_mid_peak', '0.39');
+      INSERT OR IGNORE INTO configuration (key, value) VALUES ('tou_rate_off_peak', '0.33');
     `);
 
   console.log('Database initialized');

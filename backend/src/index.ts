@@ -60,17 +60,18 @@ app.get('/api/config', async (req, res) => {
 
 app.post('/api/config', async (req, res) => {
     try {
-        const { shelly_ip, solark_ip } = req.body;
-        if (shelly_ip) {
+        const { shelly_ip, solark_ip, tou_rate_peak, tou_rate_mid_peak, tou_rate_off_peak } = req.body;
+        const updates: Record<string, string> = {};
+        if (shelly_ip) updates['shelly_ip'] = shelly_ip;
+        if (solark_ip) updates['solark_ip'] = solark_ip;
+        if (tou_rate_peak !== undefined) updates['tou_rate_peak'] = String(tou_rate_peak);
+        if (tou_rate_mid_peak !== undefined) updates['tou_rate_mid_peak'] = String(tou_rate_mid_peak);
+        if (tou_rate_off_peak !== undefined) updates['tou_rate_off_peak'] = String(tou_rate_off_peak);
+
+        for (const [key, value] of Object.entries(updates)) {
             await db.insertInto('configuration')
-                .values({ key: 'shelly_ip', value: shelly_ip })
-                .onConflict((oc) => oc.column('key').doUpdateSet({ value: shelly_ip }))
-                .execute();
-        }
-        if (solark_ip) {
-            await db.insertInto('configuration')
-                .values({ key: 'solark_ip', value: solark_ip })
-                .onConflict((oc) => oc.column('key').doUpdateSet({ value: solark_ip }))
+                .values({ key, value })
+                .onConflict((oc) => oc.column('key').doUpdateSet({ value }))
                 .execute();
         }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { OverviewCards } from '../components/dashboard/OverviewCards';
+import { TouCostWidget } from '../components/dashboard/TouCostWidget';
 import { EnergyChart } from '../components/charts/EnergyChart';
 import { RealtimeChart } from '../components/charts/RealtimeChart';
 import { useEnergyData } from '../hooks/useEnergyData';
@@ -41,6 +42,7 @@ export const Dashboard = () => {
                 </div>
                 <div className="lg:col-span-2">
                     <EnergyChart history={history} unit={timeRange === 'hour' ? 'Wh' : 'kWh'} range={timeRange} />
+                    <TouCostWidget history={history} range={timeRange} />
                 </div>
             </div>
         </>
