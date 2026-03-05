@@ -9,6 +9,9 @@ export interface Measurement {
     energy_total: number;
     pv_power?: number;
     battery_soc?: number;
+    energy_peak?: number;
+    energy_mid_peak?: number;
+    energy_off_peak?: number;
 }
 
 export const useEnergyData = (range: string = 'hour') => {
@@ -32,7 +35,10 @@ export const useEnergyData = (range: string = 'hour') => {
             if (range !== 'hour') {
                 historyData = historyData.map((item: Measurement) => ({
                     ...item,
-                    energy_total: item.energy_total / 1000
+                    energy_total: (item.energy_total || 0) / 1000,
+                    ...(item.energy_peak !== undefined && { energy_peak: item.energy_peak / 1000 }),
+                    ...(item.energy_mid_peak !== undefined && { energy_mid_peak: item.energy_mid_peak / 1000 }),
+                    ...(item.energy_off_peak !== undefined && { energy_off_peak: item.energy_off_peak / 1000 }),
                 }));
             }
             setHistory(historyData);

@@ -8,63 +8,55 @@ interface EnergyChartProps {
     range?: string;
 }
 
+function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
+    const hour = new Date(timestamp).getHours();
+    if (hour >= 16 && hour < 21) return 'peak';
+    if ((hour >= 15 && hour < 16) || hour >= 21) return 'mid_peak';
+    return 'off_peak';
+}
+
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'hour' }) => {
-    const dataWithDelta = React.useMemo(() => {
-        // Backend now handles valid 60-datapoint return for 'hour' range via CTE.
-        // We just need to calculate deltas.
+    const chartData = React.useMemo(() => {
+        const isWeekOrMonth = range === 'week' || range === 'month';
 
-        // Data is returned reverse chronological (DESC), so [newest, ..., oldest]
-        // But for delta calculation we need (current - previous_in_time).
-        // If the array is [newest, oldest], 'previous' in loop usually refers to older index? 
-        // Array.map index-1 is the *newer* element if sorted DESC? 
-        // Wait, standard map iteration: index 0 (newest), index 1 (older).
-        // previous = history[index-1] -> if index=0, previous=undefined.
+        if (isWeekOrMonth) {
+            // Backend provides pre-computed TOU energy per day
+            return history.map(item => ({
+                ...item,
+                energy_peak: item.energy_peak || 0,
+                energy_mid_peak: item.energy_mid_peak || 0,
+                energy_off_peak: item.energy_off_peak || 0,
+            }));
+        }
 
-        // Let's create a sorted copy for easier logic? Or just handle it.
-        // Charts usually want Oldest -> Newest.
-        // The backend returns DESC.
-        // The endpoint does `res.json(results.reverse())` at the end!
-        // So the frontend receives ASCending order (Oldest -> Newest).
-
-        // So index 0 is Oldest. index 1 is Newest.
-        // previous = history[index-1] is the older point. This is correct.
-
+        // For hour/day: compute inter-bucket deltas, then classify by TOU period
         return history.map((item, index) => {
             const previous = history[index - 1];
-            // If item has no energy_total (null/0 from gap), delta is 0?
-            // If previous had no energy_total, delta is 0?
-
-            // Note: If energy_total is null from SQL (gap), what do we get? 
-            // Better-sqlite3/Kysely might return null.
-            // frontend interface says `energy_total: number`.
-
             const currentTotal = item.energy_total || 0;
             const previousTotal = previous?.energy_total || 0;
-
-            // If we have a gap (currentTotal is 0/null), delta is 0.
-            // If previous was a gap (previousTotal 0), but current is valid,
-            // delta = current - 0 = huge? No.
-            // If previous is missing/0, we probably shouldn't calculate a huge delta.
 
             let delta = 0;
             if (currentTotal > 0 && previousTotal > 0) {
                 delta = Math.max(0, currentTotal - previousTotal);
             }
 
+            const period = getTouPeriod(item.timestamp);
             return {
                 ...item,
-                energy_total: currentTotal, // Ensure number for safety
-                energy_delta: delta
+                energy_total: currentTotal,
+                energy_peak: period === 'peak' ? delta : 0,
+                energy_mid_peak: period === 'mid_peak' ? delta : 0,
+                energy_off_peak: period === 'off_peak' ? delta : 0,
             };
         });
-    }, [history]);
+    }, [history, range]);
 
     return (
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg mt-6">
             <h2 className="text-lg font-bold mb-4">Energy Usage</h2>
             <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dataWithDelta}>
+                    <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis
                             dataKey="timestamp"
@@ -78,14 +70,17 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                             stroke="#94a3b8"
                             fontSize={12}
                         />
-                        <YAxis stroke="#94a3b8" fontSize={12} />
+                        <YAxis stroke="#94a3b8" fontSize={12} unit={` ${unit}`} />
                         <Tooltip
                             contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155' }}
                             labelFormatter={(ts) => new Date(ts).toLocaleString()}
                             cursor={{ fill: '#334155', opacity: 0.4 }}
+                            formatter={(value: number | undefined) => [value == null ? '' : `${value.toFixed(3)} ${unit}`, undefined]}
                         />
                         <Legend />
-                        <Bar dataKey="energy_delta" name={`Energy Delta (${unit})`} fill="#8b5cf6" />
+                        <Bar dataKey="energy_off_peak" stackId="tou" name={`Off-Peak (${unit})`} fill="#22c55e" />
+                        <Bar dataKey="energy_mid_peak" stackId="tou" name={`Mid-Peak (${unit})`} fill="#eab308" />
+                        <Bar dataKey="energy_peak" stackId="tou" name={`Peak (${unit})`} fill="#ef4444" />
                     </BarChart>
                 </ResponsiveContainer>
             </div>

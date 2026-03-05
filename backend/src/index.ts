@@ -148,7 +148,7 @@ app.get('/api/measurements/history', async (req, res) => {
              `.execute(db);
             results = query.rows;
         } else if (range === 'week') {
-            // 7 days by day - 7 data points
+            // 7 days by day - 7 data points, split by TOU period
             const currentDay = Math.floor(now / 86400000) * 86400000;
             const startDay = currentDay - 6 * 86400000;
 
@@ -158,10 +158,11 @@ app.get('/api/measurements/history', async (req, res) => {
                     UNION ALL
                     SELECT day_ts + 86400000 FROM generated_days WHERE day_ts < ${currentDay}
                 )
-                SELECT 
-                    gd.day_ts as timestamp, 
-                    COALESCE(MAX(m.source), 'generated') as source, 
-                    MAX(m.energy_total) as energy_total
+                SELECT
+                    gd.day_ts as timestamp,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END), 0) as energy_off_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END), 0) as energy_mid_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END), 0) as energy_peak
                 FROM generated_days gd
                 LEFT JOIN measurements m ON m.timestamp >= gd.day_ts AND m.timestamp < gd.day_ts + 86400000
                 GROUP BY gd.day_ts
@@ -169,7 +170,7 @@ app.get('/api/measurements/history', async (req, res) => {
              `.execute(db);
             results = query.rows;
         } else if (range === 'month') {
-            // 30 days by day - 30 data points
+            // 30 days by day - 30 data points, split by TOU period
             const currentDay = Math.floor(now / 86400000) * 86400000;
             const startDay = currentDay - 29 * 86400000;
 
@@ -179,10 +180,11 @@ app.get('/api/measurements/history', async (req, res) => {
                     UNION ALL
                     SELECT day_ts + 86400000 FROM generated_days WHERE day_ts < ${currentDay}
                 )
-                SELECT 
-                    gd.day_ts as timestamp, 
-                    COALESCE(MAX(m.source), 'generated') as source, 
-                    MAX(m.energy_total) as energy_total
+                SELECT
+                    gd.day_ts as timestamp,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END), 0) as energy_off_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END), 0) as energy_mid_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END), 0) as energy_peak
                 FROM generated_days gd
                 LEFT JOIN measurements m ON m.timestamp >= gd.day_ts AND m.timestamp < gd.day_ts + 86400000
                 GROUP BY gd.day_ts
