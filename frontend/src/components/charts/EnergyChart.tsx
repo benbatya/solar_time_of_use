@@ -17,7 +17,7 @@ function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
 
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'prev_60_minutes' }) => {
     const chartData = React.useMemo(() => {
-        const isWeekOrMonth = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_month_days';
+        const isWeekOrMonth = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_month_days' || range === 'current_year_days';
 
         if (isWeekOrMonth) {
             // Backend provides pre-computed TOU energy per day
@@ -62,7 +62,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                             dataKey="timestamp"
                             tickFormatter={(ts) => {
                                 const date = new Date(ts);
-                                if (range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_month_days') {
+                                if (range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_month_days' || range === 'current_year_days') {
                                     return date.toLocaleDateString();
                                 }
                                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

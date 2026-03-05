@@ -34,6 +34,7 @@ export const Dashboard = () => {
                     <option value="prev_180_days">Last 180 Days</option>
                     <option value="prev_360_days">Last 360 Days</option>
                     <option value="current_month_days">This Month</option>
+                    <option value="current_year_days">This Year</option>
                 </select>
             </div>
 
