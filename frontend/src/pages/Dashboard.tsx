@@ -6,7 +6,14 @@ import { RealtimeChart } from '../components/charts/RealtimeChart';
 import { useEnergyData } from '../hooks/useEnergyData';
 
 export const Dashboard = () => {
-    const [timeRange, setTimeRange] = useState('prev_60_minutes');
+    const [timeRange, setTimeRange] = useState(
+        () => localStorage.getItem('dashboard_time_range') ?? 'prev_60_minutes'
+    );
+
+    const handleTimeRangeChange = (value: string) => {
+        localStorage.setItem('dashboard_time_range', value);
+        setTimeRange(value);
+    };
     const { realtime, history, loading } = useEnergyData(timeRange);
     const latest = realtime.length > 0 ? realtime[realtime.length - 1] : null;
 
@@ -24,7 +31,7 @@ export const Dashboard = () => {
                 <h1 className="text-2xl font-bold text-white">Solar Time-of-Use Optimized</h1>
                 <select
                     value={timeRange}
-                    onChange={(e) => setTimeRange(e.target.value)}
+                    onChange={(e) => handleTimeRangeChange(e.target.value)}
                     className="bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="prev_60_minutes">Previous 60 Minutes</option>
