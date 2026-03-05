@@ -148,7 +148,7 @@ app.get('/api/measurements/history', async (req, res) => {
                 ORDER BY gh.hour_ts DESC
              `.execute(db);
             results = query.rows;
-        } else if (range === 'week') {
+        } else if (range === 'prev_7_days') {
             // 7 days by day - 7 data points, split by TOU period
             const currentDay = Math.floor(now / 86400000) * 86400000;
             const startDay = currentDay - 6 * 86400000;

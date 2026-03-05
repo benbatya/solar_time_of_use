@@ -29,7 +29,7 @@ export const Dashboard = () => {
                 >
                     <option value="hour">Last 60 Minutes</option>
                     <option value="day">Last 24 Hours</option>
-                    <option value="week">Last 7 Days</option>
+                    <option value="prev_7_days">Last 7 Days</option>
                     <option value="month">Last 30 Days</option>
                 </select>
             </div>
