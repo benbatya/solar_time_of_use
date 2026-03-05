@@ -27,16 +27,16 @@ export const Dashboard = () => {
                     onChange={(e) => setTimeRange(e.target.value)}
                     className="bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="prev_60_minutes">Last 60 Minutes</option>
+                    <option value="prev_60_minutes">Previous 60 Minutes</option>
                     <option value="current_day_hours">Today (by Hour)</option>
-                    <option value="prev_24_hours">Last 24 Hours</option>
-                    <option value="prev_7_days">Last 7 Days</option>
-                    <option value="prev_30_days">Last 30 Days</option>
-                    <option value="prev_180_days">Last 180 Days</option>
-                    <option value="prev_360_days">Last 360 Days</option>
-                    <option value="current_week_days">This Week</option>
-                    <option value="current_month_days">This Month</option>
-                    <option value="current_year_days">This Year</option>
+                    <option value="prev_24_hours">Previous 24 Hours</option>
+                    <option value="current_week_days">Current Week</option>
+                    <option value="prev_7_days">Previous 7 Days</option>
+                    <option value="current_month_days">Current Month</option>
+                    <option value="prev_30_days">Previous 30 Days</option>
+                    <option value="prev_180_days">Previous 180 Days</option>
+                    <option value="current_year_days">Current Year</option>
+                    <option value="prev_360_days">Previous 360 Days</option>
                 </select>
             </div>
 
