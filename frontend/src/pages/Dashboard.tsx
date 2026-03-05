@@ -31,6 +31,8 @@ export const Dashboard = () => {
                     <option value="prev_24_hours">Last 24 Hours</option>
                     <option value="prev_7_days">Last 7 Days</option>
                     <option value="prev_30_days">Last 30 Days</option>
+                    <option value="prev_180_days">Last 180 Days</option>
+                    <option value="prev_360_days">Last 360 Days</option>
                 </select>
             </div>
 

@@ -21,7 +21,7 @@ function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
 }
 
 function computeTouTotals(history: Measurement[], range: string) {
-    const isWeekOrMonth = range === 'prev_7_days' || range === 'prev_30_days';
+    const isWeekOrMonth = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days';
     // For hour range, deltas are in Wh; all others are already kWh
     const divisor = range === 'prev_60_minutes' ? 1000 : 1;
 
