@@ -44,11 +44,9 @@ export const Dashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="lg:col-span-2">
-                    <RealtimeChart data={realtime} />
-                </div>
-                <div className="lg:col-span-2">
-                    <EnergyChart history={history} unit={timeRange === 'prev_60_minutes' ? 'Wh' : 'kWh'} range={timeRange} />
                     <TouCostWidget history={history} range={timeRange} />
+                    <EnergyChart history={history} unit={timeRange === 'prev_60_minutes' ? 'Wh' : 'kWh'} range={timeRange} />
+                    <RealtimeChart data={realtime} />
                 </div>
             </div>
         </>
