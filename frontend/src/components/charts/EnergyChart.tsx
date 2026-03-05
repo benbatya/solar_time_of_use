@@ -16,7 +16,7 @@ function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
 }
 
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'prev_60_minutes' }) => {
-    const rangeIsDays = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_week_days' || range === 'current_month_days' || range === 'current_year_days';
+    const rangeIsDays = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_week_days' || range === 'current_month_days' || range === 'current_year_days' || range === 'current_day_hours';
 
     const chartData = React.useMemo(() => {
         if (rangeIsDays) {
@@ -62,6 +62,9 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                             dataKey="timestamp"
                             tickFormatter={(ts) => {
                                 const date = new Date(ts);
+                                if (range === 'current_day_hours') {
+                                    return date.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+                                }
                                 if (rangeIsDays) {
                                     return date.toLocaleDateString();
                                 }

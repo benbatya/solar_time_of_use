@@ -260,6 +260,29 @@ app.get('/api/measurements/history', async (req, res) => {
                 ORDER BY gd.day_ts DESC
              `.execute(db);
             results = query.rows;
+        } else if (range === 'current_day_hours') {
+            // All hours today from midnight to current hour, split by TOU period
+            const nowDate = new Date(now);
+            const dayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
+            const currentHour = Math.floor(now / 3600000) * 3600000;
+
+            const query = await sql`
+                WITH RECURSIVE generated_hours(hour_ts) AS (
+                    SELECT ${dayStart}
+                    UNION ALL
+                    SELECT hour_ts + 3600000 FROM generated_hours WHERE hour_ts < ${currentHour}
+                )
+                SELECT
+                    gh.hour_ts as timestamp,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 0 AND 14 THEN m.energy_total END), 0) as energy_off_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) IN (15, 21, 22, 23) THEN m.energy_total END), 0) as energy_mid_peak,
+                    COALESCE(MAX(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END) - MIN(CASE WHEN CAST(strftime('%H', m.timestamp/1000, 'unixepoch', 'localtime') AS INTEGER) BETWEEN 16 AND 20 THEN m.energy_total END), 0) as energy_peak
+                FROM generated_hours gh
+                LEFT JOIN measurements m ON m.timestamp >= gh.hour_ts AND m.timestamp < gh.hour_ts + 3600000
+                GROUP BY gh.hour_ts
+                ORDER BY gh.hour_ts DESC
+             `.execute(db);
+            results = query.rows;
         } else if (range === 'current_week_days') {
             // All days in the current calendar week (Mon–Sun), split by TOU period
             const nowDate = new Date(now);

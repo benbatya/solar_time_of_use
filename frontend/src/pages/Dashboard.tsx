@@ -28,6 +28,7 @@ export const Dashboard = () => {
                     className="bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="prev_60_minutes">Last 60 Minutes</option>
+                    <option value="current_day_hours">Today (by Hour)</option>
                     <option value="prev_24_hours">Last 24 Hours</option>
                     <option value="prev_7_days">Last 7 Days</option>
                     <option value="prev_30_days">Last 30 Days</option>
