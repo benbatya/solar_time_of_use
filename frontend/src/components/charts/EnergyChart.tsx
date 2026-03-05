@@ -15,9 +15,9 @@ function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
     return 'off_peak';
 }
 
-export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'hour' }) => {
+export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'prev_60_minutes' }) => {
     const chartData = React.useMemo(() => {
-        const isWeekOrMonth = range === 'prev_7_days' || range === 'month';
+        const isWeekOrMonth = range === 'prev_7_days' || range === 'prev_30_days';
 
         if (isWeekOrMonth) {
             // Backend provides pre-computed TOU energy per day
@@ -62,7 +62,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                             dataKey="timestamp"
                             tickFormatter={(ts) => {
                                 const date = new Date(ts);
-                                if (range === 'prev_7_days' || range === 'month') {
+                                if (range === 'prev_7_days' || range === 'prev_30_days') {
                                     return date.toLocaleDateString();
                                 }
                                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

@@ -121,13 +121,13 @@ app.get('/api/measurements/realtime', async (req, res) => {
 app.get('/api/measurements/history', async (req, res) => {
     try {
         // Simple history fetch (last 1 hour?)
-        const range = (req.query.range as string) || 'hour';
+        const range = (req.query.range as string) || 'prev_60_minutes';
         const now = Date.now();
 
         let results: any[] = [];
         const { sql } = require('kysely');
 
-        if (range === 'day') {
+        if (range === 'prev_24_hours') {
             // 24h by hour - 24 data points
             const currentHour = Math.floor(now / 3600000) * 3600000;
             const startHour = currentHour - 23 * 3600000;
@@ -170,7 +170,7 @@ app.get('/api/measurements/history', async (req, res) => {
                 ORDER BY gd.day_ts DESC
              `.execute(db);
             results = query.rows;
-        } else if (range === 'month') {
+        } else if (range === 'prev_30_days') {
             // 30 days by day - 30 data points, split by TOU period
             const currentDay = Math.floor(now / 86400000) * 86400000;
             const startDay = currentDay - 29 * 86400000;

@@ -6,7 +6,7 @@ import { RealtimeChart } from '../components/charts/RealtimeChart';
 import { useEnergyData } from '../hooks/useEnergyData';
 
 export const Dashboard = () => {
-    const [timeRange, setTimeRange] = useState('hour');
+    const [timeRange, setTimeRange] = useState('prev_60_minutes');
     const { realtime, history, loading } = useEnergyData(timeRange);
     const latest = realtime.length > 0 ? realtime[realtime.length - 1] : null;
 
@@ -27,10 +27,10 @@ export const Dashboard = () => {
                     onChange={(e) => setTimeRange(e.target.value)}
                     className="bg-slate-800 text-white border border-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="hour">Last 60 Minutes</option>
-                    <option value="day">Last 24 Hours</option>
+                    <option value="prev_60_minutes">Last 60 Minutes</option>
+                    <option value="prev_24_hours">Last 24 Hours</option>
                     <option value="prev_7_days">Last 7 Days</option>
-                    <option value="month">Last 30 Days</option>
+                    <option value="prev_30_days">Last 30 Days</option>
                 </select>
             </div>
 
@@ -41,7 +41,7 @@ export const Dashboard = () => {
                     <RealtimeChart data={realtime} />
                 </div>
                 <div className="lg:col-span-2">
-                    <EnergyChart history={history} unit={timeRange === 'hour' ? 'Wh' : 'kWh'} range={timeRange} />
+                    <EnergyChart history={history} unit={timeRange === 'prev_60_minutes' ? 'Wh' : 'kWh'} range={timeRange} />
                     <TouCostWidget history={history} range={timeRange} />
                 </div>
             </div>
