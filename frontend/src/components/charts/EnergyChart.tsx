@@ -16,10 +16,10 @@ function getTouPeriod(timestamp: number): 'peak' | 'mid_peak' | 'off_peak' {
 }
 
 export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh', range = 'prev_60_minutes' }) => {
-    const rangeIsDays = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_week_days' || range === 'current_month_days' || range === 'current_year_days' || range === 'current_day_hours';
+    const rangeIsDays = range === 'prev_7_days' || range === 'prev_30_days' || range === 'prev_180_days' || range === 'prev_360_days' || range === 'current_week_days' || range === 'current_month_days' || range === 'current_year_days';
 
     const chartData = React.useMemo(() => {
-        if (rangeIsDays) {
+        if (rangeIsDays || range === 'current_day_hours') {
             // Backend provides pre-computed TOU energy per day
             return history.map(item => ({
                 ...item,
@@ -82,7 +82,7 @@ export const EnergyChart: React.FC<EnergyChartProps> = ({ history, unit = 'kWh',
                                 const total = payload.reduce((sum, entry) => sum + ((entry.value as number) || 0), 0);
                                 return (
                                     <div style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '8px 12px', borderRadius: 6 }}>
-                                        <p style={{ color: '#94a3b8', marginBottom: 4 }}>{label != null ? (rangeIsDays && range !== 'current_day_hours' ? new Date(label).toLocaleDateString() : new Date(label).toLocaleString()) : ''}</p>
+                                        <p style={{ color: '#94a3b8', marginBottom: 4 }}>{label != null ? (rangeIsDays ? new Date(label).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' }) : new Date(label).toLocaleString()) : ''}</p>
                                         {payload.map(entry => (
                                             <p key={entry.dataKey as string} style={{ color: entry.color, margin: '2px 0' }}>
                                                 {entry.name}: {((entry.value as number) || 0).toFixed(3)} {unit}
